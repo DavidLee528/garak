@@ -12,6 +12,17 @@ import tqdm
 
 from garak import _config
 
+import os
+import yaml
+from typing import Dict
+
+def read_proxy_config() -> Dict[str, str]:
+    path: str = os.path.abspath(os.path.dirname(__file__)) + '/../configs/proxy.yaml'
+    with open(path, 'r', encoding = 'utf-8') as f:
+        proxy_config = yaml.safe_load(f.read())
+        if proxy_config['http'] is None and proxy_config['https'] is None:
+            return None
+        return proxy_config
 
 class Generator:
     """Base class for objects that wrap an LLM or other text-to-text service"""
@@ -24,6 +35,7 @@ class Generator:
     top_k = None
     active = True
     generator_family_name = None
+    proxy_config = None
 
     supports_multiple_generations = (
         False  # can more than one generation be extracted per request?
@@ -42,6 +54,9 @@ class Generator:
                 self.fullname = self.name
         if not self.generator_family_name:
             self.generator_family_name = "<empty>"
+        self.proxy_config = read_proxy_config()
+        if self.proxy_config is not None:
+            print(f"🌐 using proxy config: {str(self.proxy_config)}")
         print(
             f"🦜 loading {Style.BRIGHT}{Fore.LIGHTMAGENTA_EX}generator{Style.RESET_ALL}: {self.generator_family_name}: {self.name}"
         )
